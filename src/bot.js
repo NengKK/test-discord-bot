@@ -3,6 +3,7 @@ require('dotenv').config();
 const { Client } = require('discord.js');
 const client = new Client();
 const COMMAND_PREFIX = '$';
+const COMMON_ERROR_MESSAGE = 'Something went wrong! Please check UserID or contact administrator';
 
 client.on('ready', () => {
   console.log(`${client.user.username} is ready!!`);
@@ -26,7 +27,7 @@ client.on('message', (message) => {
           return message.reply('You don\'t have permission to use that command. 😏');
         if (args.length === 0)
           return message.reply('Please provide an user ID!');
-        
+
         message.guild.members.fetch(args[0])
           .then((member) => {
             if (member.kickable) {
@@ -40,14 +41,32 @@ client.on('message', (message) => {
           })
           .catch((ex) => {
             console.error(ex);
-            message.reply(`Something went wrong! Please check UserID or contact administrator`);
+            message.reply(COMMON_ERROR_MESSAGE);
           });
 
         return;
       case 'ban':
-        message.reply(`BAN command is under construction!`)
-        // if (args.length === 0) return message.reply('Please provide an user ID!');
-        // message.channel.send(`Banned user: ${args[0]}`);
+        if (!message.member.hasPermission('BAN_MEMBERS'))
+          return message.reply('You don\'t have permission to use that command. 😏');
+        if (args.length === 0)
+          return message.reply('Please provide an user ID!');
+
+        message.guild.members.fetch(args[0])
+          .then(member => {
+            if (!member.bannable) return message.reply('Cannot ban given user!');
+
+            member.ban()
+              .then(member => message.channel.send(`${member} was banned!`))
+              .catch(ex => {
+                console.error(ex);
+                message.channel.send('I cannot ban that user');
+              });
+          })
+          .catch((ex) => {
+            console.error(ex);
+            message.reply(COMMON_ERROR_MESSAGE);
+          });
+
         return;
       default:
         message.reply(`${CMD_NAME} command not found!`);
