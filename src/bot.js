@@ -22,12 +22,18 @@ client.on('message', (message) => {
 
     switch (CMD_NAME.toLowerCase()) {
       case 'kick':
-        if (args.length === 0) return message.reply('Please provide an user ID!');
+        if (!message.member.hasPermission('KICK_MEMBERS'))
+          return message.reply('You don\'t have permission to use that command. 😏');
+        if (args.length === 0)
+          return message.reply('Please provide an user ID!');
         
         message.guild.members.fetch(args[0])
           .then((member) => {
             if (member.kickable) {
-              member.kick();
+              member
+                .kick()
+                .then(member => message.channel.send(`${member} was kicked! 😤`))
+                .catch(() => message.channel.send('I cannot kick that user 😓'));
             } else {
               message.reply(`Cannot kick given user!`);
             }
